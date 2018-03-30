@@ -56,17 +56,17 @@ $AMD = [System.Drawing.Image]::Fromfile($AMDJpg)
 Function Confirm-Powercli {
     $AllModules = Get-Module -ListAvailable VMware.VimAutomation.Core
     if (!$AllModules) {
-        Show-MessageBox -Message "Install VMware Powercli 5.5 R2 or Latest. `n`nUse either 'Install-Module VMware.VimAutomation.Core' `nor download Powercli from 'http://my.vmware.com'" -Title 'VMware Powercli Missing error' | Out-Null
+        Show-MessageBox -Message "Install VMware Powercli 6.0 or Latest. `n`nUse either 'Install-Module VMware.VimAutomation.Core' `nor download Powercli from 'http://my.vmware.com'" -Title 'VMware Powercli Missing error' | Out-Null
     }
     else {
         Import-Module VMware.VimAutomation.Core
         $PowercliVer = Get-Module VMware.VimAutomation.Core
-        $ReqVersion = New-Object System.Version('5.5.0.1671586')
+        $ReqVersion = New-Object System.Version('6.0.0.0')
         if ($PowercliVer.Version -gt $ReqVersion) {
             'Ok'
         }
         else {
-            Show-MessageBox -Message "Install VMware Powercli 5.5 R2 or Latest. `n`nUse either 'Install-Module VMware.VimAutomation.Core' `nor download Powercli from 'http://my.vmware.com'" -Title 'Lower version Powercli' | Out-Null
+            Show-MessageBox -Message "Install VMware Powercli 6.0 or Latest. `n`nUse either 'Install-Module VMware.VimAutomation.Core' `nor download Powercli from 'http://my.vmware.com'" -Title 'Lower version Powercli' | Out-Null
         }
     }
 }
