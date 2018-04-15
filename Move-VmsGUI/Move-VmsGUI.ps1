@@ -2,7 +2,7 @@
 #Tools used
     #Windows 10
     #Powercli 6.5
-    #Sapien powershell studio
+    #PrimalForms Community Edition
 
 #region Import the Assemblies
 [reflection.assembly]::loadwithpartialname("System.Drawing") | Out-Null
@@ -519,15 +519,16 @@ $ESXiInfo.Add_click({
 
 function Change-DestCombobox {
     Show-MessageBox -Message 'Source and destination esxi servers are same' -Title 'Esxi name conflict' | Out-Null
+    $dataGrid1.DataSource = $null
     $DestinationEsxi.Text = $SourceEsxi.Items[$SourceEsxi.SelectedIndex - 1]
     $statusBar1.Text = 'Source and destination Esxi should different'
 }
 
 $SourceEsxi.Add_TextChanged({
-    Update-VMDataGrid
     if ($DestinationEsxi.Text -eq $SourceEsxi.Text) {
         Change-DestCombobox
     }
+    Update-VMDataGrid
 })
 
 $DestinationEsxi.Add_TextChanged({
