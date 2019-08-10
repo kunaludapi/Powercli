@@ -1,0 +1,9 @@
+#On vCenter
+Get-VM dev001 | Get-HardDisk -Name 'Hard disk 1' |  Set-HardDisk -CapacityGB 7 -Confirm:$false
+
+#On Windows
+Resize-Partition -Size 40GB  -DriveLetter C
+
+#OR to supported Max
+$size = Get-PartitionSupportedSize -DriveLetter C
+Resize-Partition -DriveLetter C -Size $size.SizeMax
