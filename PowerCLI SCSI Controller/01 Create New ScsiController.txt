@@ -1,0 +1,23 @@
+#Adding new SCSI Controller
+
+$spec = New-Object VMware.Vim.VirtualMachineConfigSpec
+$spec.DeviceChange = New-Object VMware.Vim.VirtualDeviceConfigSpec[] (1)
+$spec.DeviceChange[0] = New-Object VMware.Vim.VirtualDeviceConfigSpec
+$spec.DeviceChange[0].Device = New-Object VMware.Vim.VirtualLsiLogicSASController
+#$spec.DeviceChange[0].Device.SharedBus = 'noSharing' #(Get-VM Dev001 | Get-ScsiController).ExtensionData.SharedBus
+#$spec.DeviceChange[0].Device.ScsiCtlrUnitNumber = 7 #(Get-VM Dev001 | Get-ScsiController).ExtensionData.ScsiCtlrUnitNumber
+$spec.DeviceChange[0].Device.DeviceInfo = New-Object VMware.Vim.Description
+$spec.DeviceChange[0].Device.DeviceInfo.Summary = 'New SCSI controller'
+$spec.DeviceChange[0].Device.DeviceInfo.Label = 'New SCSI controller'
+$spec.DeviceChange[0].Device.Key = 1001 #-101 #(Get-VM Dev001 | Get-ScsiController).ExtensionData.key
+$spec.DeviceChange[0].Device.BusNumber = 1 #(Get-VM Dev001 | Get-ScsiController).ExtensionData.BusNumber
+$spec.DeviceChange[0].Operation = 'add'
+#$spec.CpuFeatureMask = New-Object VMware.Vim.VirtualMachineCpuIdInfoSpec[] (0)
+
+$vm = Get-View -Id 'VirtualMachine-vm-15'
+$task = $vm.ReconfigVM_Task($spec)
+
+
+
+Get-VM Dev001 | Get-ScsiController | Select Name, Type, UnitNumber
+Get-Task -Id $task | select state

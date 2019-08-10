@@ -1,0 +1,25 @@
+$spec = New-Object VMware.Vim.VirtualMachineConfigSpec
+$spec.DeviceChange = New-Object VMware.Vim.VirtualDeviceConfigSpec[] (1)
+$spec.DeviceChange[0] = New-Object VMware.Vim.VirtualDeviceConfigSpec
+$spec.DeviceChange[0].Device = New-Object VMware.Vim.VirtualLsiLogicSASController
+#$spec.DeviceChange[0].Device.SharedBus = 'noSharing'
+#$spec.DeviceChange[0].Device.ScsiCtlrUnitNumber = 7
+#$spec.DeviceChange[0].Device.HotAddRemove = $true
+#$spec.DeviceChange[0].Device.ControllerKey = 100
+#$spec.DeviceChange[0].Device.UnitNumber = 4
+$spec.DeviceChange[0].Device.DeviceInfo = New-Object VMware.Vim.Description
+$spec.DeviceChange[0].Device.DeviceInfo.Summary = 'LSI Logic SAS'
+$spec.DeviceChange[0].Device.DeviceInfo.Label = 'SCSI controller 1'
+$spec.DeviceChange[0].Device.Key = 1001 #(Get-VM Dev001 | Get-ScsiController).ExtensionData.key
+$spec.DeviceChange[0].Device.BusNumber = 1  #(Get-VM Dev001 | Get-ScsiController).ExtensionData.BusNumber
+$spec.DeviceChange[0].Operation = 'remove'
+#$spec.CpuFeatureMask = New-Object VMware.Vim.VirtualMachineCpuIdInfoSpec[] (0)
+
+$vm = Get-View -Id 'VirtualMachine-vm-15'
+$task = $vm.ReconfigVM_Task($spec)
+
+Start-Sleep -Seconds 5 
+Get-VM Dev001 | Get-ScsiController | Select Name, Type, UnitNumber
+
+Start-Sleep -Seconds 5
+Get-Task -Id $task | select state
