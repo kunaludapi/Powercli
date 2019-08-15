@@ -41,4 +41,4 @@ foreach ($data in $csv)
     }
 }
 
-Get-Cluster $csv.Cluster | Get-TagAssignment | Select-Object Entity, Tag
+Get-Cluster $csv.Cluster | Get-TagAssignment -Category CMDBID | Select-Object Entity, Tag
