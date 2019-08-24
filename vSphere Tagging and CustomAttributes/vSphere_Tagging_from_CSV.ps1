@@ -1,3 +1,6 @@
+#Cluster,	Tag,	TagCategory,	Cardinality,	EntityType
+#Dev-Cluster001,	CLU000111,	CMDBID,	Single,	Cluster
+
 $csv = Import-Csv C:\temp\data.csv
 
 $uniqueTagCategory = $csv | Sort-Object -Property @{Expression='TagCategory'; Descending=$true}, Cardinality, EntityType -Unique
