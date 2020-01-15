@@ -1,0 +1,44 @@
+---
+- hosts: localhost
+  
+  tasks:
+    - name: Include Secret Environment Items
+      include_vars:
+        file: secrets.yml
+        name: secret
+
+    - name: vCenter Login
+      uri:
+        url: "https://{{secret.vcenter}}/rest/com/vmware/cis/session"
+        force_basic_auth: yes
+        method: POST
+        user: "{{secret.username}}"
+        password: "{{secret.password}}"
+        status_code: 200
+        validate_certs: no
+      register: login
+
+    - name: Get hosts from vCenter
+      uri:
+        url: "https://{{secret.vcenter}}/rest/vcenter/host"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Cookie: "{{login.set_cookie}}"
+      register: vchosts
+
+    - name: Set ESXi shell time out
+      vmware_host_config_manager:
+        hostname: "{{secret.vcenter}}"
+        username: "{{secret.username}}"
+        password: "{{secret.password}}"
+        esxi_hostname: "{{item.name}}"
+        options:
+          'UserVars.ESXiShellTimeOut': 1800
+          'NFS.MaxVolumes': 256
+          'NFS.HeartbeatMaxFailures': 10
+          'NFS.HeartbeatTimeout': 5
+          'NFS.HeartbeatFrequency': 12
+          'Net.TcpipHeapSize': 32
+        validate_certs: no
+      with_items: "{{vchosts.json.value}}"
