@@ -1,0 +1,73 @@
+---
+- hosts: localhost
+  gather_facts: False
+  connection: local
+  tasks:
+    - name: Include Secret Environment Items
+      include_vars:
+        file: secrets.yml
+        name: secret
+      
+    - name: vCenter Login
+      uri:
+        url: "https://{{secret.vcenter}}/rest/com/vmware/cis/session"
+        force_basic_auth: yes
+        method: POST
+        user: "{{secret.username}}"
+        password: "{{secret.password}}"
+        status_code: 200
+        validate_certs: no
+      register: login
+
+    - name: Get hosts from vCenter
+      uri:
+        url: "https://{{secret.vcenter}}/rest/vcenter/host"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Cookie: "{{login.set_cookie}}"
+      register: vchosts
+
+    - name: filter list of only connected esxi
+      set_fact: 
+        esxilist: "{{esxilist | default([]) + [item]}}"
+      with_items: "{{vchosts.json.value}}"
+      when: item.connection_state == "CONNECTED"
+    
+    - name: Get ESXi advanced settings
+      vmware_host_config_info:
+        hostname: "{{secret.vcenter}}"
+        username: "{{secret.username}}"
+        password: "{{secret.password}}"
+        esxi_hostname: "{{item.name}}"
+        validate_certs: no
+      with_items: "{{esxilist}}"
+      register: completehosts
+      when: item.connection_state == "CONNECTED"
+
+    - name: Method 1 - Resolved - Only hosts_info from complete report using json_query
+      debug:
+        msg: 
+          "HostName": "{{ item.hosts_info.keys()[0] }}"
+          "Vpx.Vpxa.config.vpxa.hostIp": "{{ item.hosts_info | json_query('*.\"Vpx.Vpxa.config.vpxa.hostIp\"') | join(',') }}"
+          "Vpx.Vpxa.config.vpxa.hostKey": "{{ item.hosts_info | json_query('*.\"Vpx.Vpxa.config.vpxa.hostKey\"') | join(',') }}"
+          "ScratchConfig.CurrentScratchLocation": "{{ item.hosts_info | json_query('*.\"ScratchConfig.CurrentScratchLocation\"') | join(',') }}"
+      loop: "{{ completehosts.results }}"
+      loop_control:
+        label: "{{ item.hosts_info.keys()[0]  }}"
+      failed_when: "item.hosts_info is undefined"
+      ignore_errors: True
+    
+    - name: Method 2 - Resolved - Only hosts_info from complete report using jinja2
+      debug:
+        msg: |
+          {% set info = [] -%}
+          {% for infoarray in completehosts.results -%}
+            {% set singlehost = infoarray.hosts_info -%}
+            {% set hostkeyname = singlehost.keys() | join(', ') -%}
+            {% set ipaddress = singlehost | json_query('*."Vpx.Vpxa.config.vpxa.hostIp"') | join(', ') -%}
+            {% set hostkey = singlehost | json_query('*."Vpx.Vpxa.config.vpxa.hostKey"') | join(', ') -%}
+            {% set scratch = singlehost | json_query('*."ScratchConfig.CurrentScratchLocation"') | join(', ') -%}
+            {% set ignored = info.extend([{'hostname': hostkeyname, 'ip': ipaddress, 'key': hostkey, 'scratch': scratch}]) -%}
+          {%- endfor %}
+          {{info}}
